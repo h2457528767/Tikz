@@ -1,1 +1,84 @@
+% 更新内容：
+% 激光源竖直放置，以优化光路和空间占比；
+% 加入泵浦探测法光路的其他光学器件，改善光路器件和标签位置；
+% ! LuaLaTeX
+\variablefam=-1
+\documentclass{standalone}
+%\usepackage{auto-pst-pdf-lua}
+\usepackage{pst-optexp}
+\usepackage{libertinus-otf}
+\usepackage{amsmath}
+\usepackage{nicefrac}% nicefrac
+\usepackage{tikz}
 
+\begin{document}
+\begin{pspicture}[showgrid](-0.3,-2.3)(9,2.2)%[showgrid](-0.1,-2)(8.6,2)%
+\pnodes(1.0,0.8){Laser}(2.5,0){BS}(4.1,0){DL}(6.1,0){SAM}(8,0){Det}(3.95,-1.2){RA}%设定各个器件的位置
+\pnodes(1.0,0){M0}(2.5,1.5){M1}(5.5,1.5){M2}(5.5,0.34){M3}(6.6,-0.15){M4}(3.7,0){M5}(3.7,-1.08){M6}(4.2,-1.08){M7}(4.2,0){M8}%设定各个器件的位置
+\psset{mirrorwidth=0.4, mirrortype=plain, mirrordepth=0.1, plateheight=0.7, outerheight=0.7, labeloffset=0.5, labelstyle=\scriptsize, lens=0.8 0.8 0.6, bssize=0.5, linewidth=0.5\pslinewidth}% 整体设置，控制标签位置、波片大小、分束器大小，字体大小，反射镜尺寸、透镜规格半径等
+% ----------------------------------------------------
+%      Pump 光（支路）
+% ----------------------------------------------------
+\optsource[compname=Laser, innerlabel, sourcesize=0.9 0.5, position=start, angle=0](Laser)(M0){Laser} % 1
+\mirror[compname=M0, labeloffset=0.3](Laser)(M0)(BS){M} % 2
+\beamsplitter[compname=BS, labelangle=-90, labeloffset=0.4](M0)(BS)(M1){BS} % 3
+\mirror[compname=M1, labeloffset=0.3](BS)(M1)(M2){M$_1$} % 4
+\mirror[compname=M2, labeloffset=0.3](M1)(M2)(M3){M$_2$} % 5
+\mirror[compname=M3, extnode=cr, mirrorwidth=0.4, labelangle=-75, labeloffset=0.4](M2)(M3)(M4){M$_3$} % 6
+\mirror[compname=M4, extnode=c, mirrortype=plain, linewidth=2\pslinewidth, mirrorwidth=0.28, labeloffset=0.3, labelangle=-30](M3)(M4)(M3){M$_4$} % 7   angle=25
+% ----------------------------------------------------
+%      Probe 光（支路）
+% ----------------------------------------------------
+\optbox[compname=SAM, position=0.64, optboxsize=0.2 0.4, labelangle=-20, labeloffset=0.4](\oenodeExt{M3}|BS)(\oenodeExt{M4}|BS){Sample} % 8
+\optdetector[compname=Det, detsize=0.5, extnode=cr, labelangle=180, dettype=diode](BS)(Det){Detector} % 9    dettype=diode, round
+% ----------------------------------------------------
+%      延迟线（可使用直角棱镜，也可使用反射镜组合）
+% ----------------------------------------------------
+%\optarrowcomp[compname=Delay, labeloffset=0.5, position=0.4, arrowcompsize=0.8 0.5, extnode=cc](BS)(SAM){Delay}
+\mirror[compname=M5, position=0.3, mirrorwidth=0.4, labelangle=60, labeloffset=0.4](BS)(M5)(M6){M$_5$} % 10
+\mirror[compname=M7, labelangle=40, labeloffset=0.3, mirrorwidth=0.3](M5)(M6)(M7){M$_6$} % 11
+%\rightangleprism[compname=RA, position=0.35, raprismsize=0.7, raprismalign=auto](M5)(RA)(M6){}
+\mirror[compname=M6, labelangle=-40, labeloffset=0.3, mirrorwidth=0.3](M6)(M7)(M8){M$_7$} % 12
+\mirror[compname=M8, position=0.4, mirrorwidth=0.4, labelangle=-60, labeloffset=0.4](M7)(M8)(SAM){M$_8$} % 13
+% ----------------------------------------------------
+%      中间插入的部分
+% ----------------------------------------------------
+\pinhole[compname=PH1, position=0.25, labeloffset=0.4,
+    outerheight=0.5, % 整体长度
+    innerheight=0.1, % 孔的直径
+    phlinewidth=2\pslinewidth, % 线宽
+    phwidth=0%中心凹陷深度
+    ](M0)(BS){PH} % 光阑 - 准直      14
+\lens[compname=L1, position=0.5, labelangle=-180, labeloffset=0.45](M0)(BS){L} % 透镜 - 平行    15
+\glanthompson[compname=GP, position=0.3, glanthompsonsize=0.45 0.45, glanthompsongap=0.03, labeloffset=0.37](M1)(M2){GT}% 16  prism
+%\optaom[compname=EOM, aomalign=straight, position=0.7,aomsize=0.6 0.45, aomgratingcount=5, labeloffset=0.35](M1)(M2)(4.9,1.6){EOM}%7
+\optbox[compname=EOM, labeloffset=0.35, position=0.7, optboxsize=0.6 0.4](M1)(M2){EOM} % 17
+%\optplate[compname=Chopper, plateheight=0.45, linestyle=dashed,dash=2pt 1pt, platelinewidth=2.5\pslinewidth, linecolor=black, labeloffset=0.7,labelangle=-180](M2)(M3){Chopper}
+\optretplate[compname=QWP, position=0.2, platesize=0.07 0.3, labelangle=-170, labeloffset=0.27, labelref=relative](M3)(M4){$\nicefrac{\lambda}{4}$} % 四分之一波片   18
+\lens[compname=L3, position=0.35, labelangle=-190, lensheight=0.3, lensradius=0.4 0.4, labeloffset=0.27, labelref=relative](M3)(M4){L}%19 透镜 - 聚焦 pump 到样品
+\optplate[compname=ND, plateheight=0.45, platelinewidth=2.5\pslinewidth, linecolor=gray!80!black, labeloffset=0.4](BS)(M5){ND} % 20  ND filter
+%\crystal[compname=ND, position=0.2, fillstyle=solid, fillcolor=gray!50, caxislength=0, crystalsize=0.12 0.45, labeloffset=0.4](BS)(SAM){ND}
+\glanthompson[compname=GP2, position=0.28, glanthompsonsize=0.45 0.45, glanthompsongap=0.03, labeloffset=0.4](M8)(SAM){GT} % 格兰棱镜probe   21
+\lens[compname=L2, position=0.55, labelangle=0](M8)(SAM){L} % 透镜 - 聚焦 probe  22
+
+\optretplate[compname=QWP2, position=0.5, platesize=0.1 0.55, labelangle=-180, labeloffset=0.45](SAM)(Det){$\nicefrac{\lambda}{2}$} % 半波片   23
+\glanthompson[compname=WP, position=0.8, glanthompsonsize=0.4 0.4, labeloffset=0.4](SAM)(Det){WP} % Wollaston prism 24
+\optbox[compname=LA, compshift=-1.2, optboxsize=1.9 0.6, innerlabel](\oenodeExt{M3}|\oenodeExt{Det})(\oenodeExt{Det}){Lock-in Amp}%{Lock-in Amplifier}
+\optbox[compname=PC, compshift=-1.2, optboxsize=0.7 0.5, extnode=cr, innerlabel, position=start](\oenodeExt{M3}|\oenodeExt{Det})(SAM){PC}
+%\psframe[linewidth=0.5\pslinewidth,framearc=.3,fillstyle=solid,fillcolor=lightgray](4.2,-1.8)(5.5,-1) % PC
+\addtopsstyle{Wire}{arm=0.3}
+\drawwire[](\oenodeExt{PC}){LA}
+\drawwire[wireangleA=-180, wireangleB=0, wirestyle=diag,linearc=0.2](\oenodeExt{Det}){LA}
+\optbox[compname=Delay, optboxsize=0.95 0.98, labeloffset=0.9, labelangle=-90, compshift=0, extnode=cr, linewidth=0.4\pslinewidth](M6)(M7){Delay}%(3.4,-0.9)(4.5,-0.9){Delay}
+\psline[linestyle=dashed, dash=1.5pt 1pt]{<->}(3.4,-1.45)(3.4,-0.68)
+%\drawwire[wireangleA=0,linearc=0.07](\oenodeExt{Delay}){PC}%wireangleA=0, wireangleB=0,linearc=0.2,
+\drawfiber[](\oenodeExt{Delay}){PC}
+
+\addtopsstyle{Beam}{linewidth=2.0\pslinewidth, linejoin=2, fillstyle=solid, fillcolor=green!50, opacity=0.5}
+%\drawbeam[linewidth=2.0\pslinewidth](Laser)(BS)(M1)(GP)(EOM)(M2)(M3)(L3)(M4)%pump
+\drawbeam[linewidth=2.0\pslinewidth]{1-7}%pump
+\drawbeam[linewidth=1.0\pslinewidth]{1-2}{10-13}{9}%probe
+\end{pspicture}
+% 要点：列出构成光路框架的关键器件（光源、光路发生折返处的部件、探测器等），之后按照比例position填充其余器件。
+
+\end{document} 
